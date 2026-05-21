@@ -116,11 +116,12 @@ const fragmentShader = `
     float t = uTime;
     float s = uScroll;
 
-    // -------- 3 horizontal lines (uOrientation 0)
+    // -------- 3 horizontal lines (always horizontal — no orientation switch)
     //  [0] = thick accent stroke, [1..2] = thin secondaries
+    //  Motion VERY minimal — barely-perceptible drift, no scroll parallax
     float hBase[3];   hBase[0]=0.62;   hBase[1]=0.18;   hBase[2]=0.88;
-    float hPx[3];     hPx[0]=0.28;     hPx[1]=0.55;     hPx[2]=0.18;
-    float hDrift[3];  hDrift[0]=0.008; hDrift[1]=0.015; hDrift[2]=0.020;
+    float hPx[3];     hPx[0]=0.0;      hPx[1]=0.0;      hPx[2]=0.0;
+    float hDrift[3];  hDrift[0]=0.0004; hDrift[1]=0.0006; hDrift[2]=0.0005;
     float hThick[3];  hThick[0]=0.0042; hThick[1]=0.0013; hThick[2]=0.0011;
 
     float hLines = 0.0;
@@ -134,10 +135,11 @@ const fragmentShader = `
     }
 
     // -------- 3 vertical lines (uOrientation 1)
-    //  [0] = thick accent, [1..2] = thin secondaries (mixed drift direction)
+    //  [0] = thick accent, [1..2] = thin secondaries
+    //  Motion intentionally minimal — gentle drift only, no scroll parallax
     float vBase[3];   vBase[0]=0.35;   vBase[1]=0.78;   vBase[2]=0.14;
-    float vPx[3];     vPx[0]=-0.20;    vPx[1]= 0.30;    vPx[2]= 0.16;
-    float vDrift[3];  vDrift[0]=0.007; vDrift[1]=-0.013; vDrift[2]=0.010;
+    float vPx[3];     vPx[0]=-0.010;   vPx[1]= 0.018;   vPx[2]= 0.008;
+    float vDrift[3];  vDrift[0]=0.0012; vDrift[1]=-0.0022; vDrift[2]=0.0018;
     float vThick[3];  vThick[0]=0.0040; vThick[1]=0.0012; vThick[2]=0.0010;
 
     float aw = aspect;
@@ -152,16 +154,16 @@ const fragmentShader = `
       vLines += L;
     }
 
-    // Crossfade between H-only and V-only based on uOrientation (0..1)
-    float lines = mix(hLines, vLines, uOrientation);
+    // Horizontal lines only
+    float lines = hLines;
 
-    // Cursor brightens lines locally
+    // Subtle cursor brightening (no positional motion of lines)
     vec2 mp = uMouse;
     mp.x = mp.x * aspect;
     float mdist = distance(p, mp);
-    float mInf = exp(-mdist * 4.0) * (0.3 + uMouseVel * 1.4);
+    float mInf = exp(-mdist * 4.0) * (0.2 + uMouseVel * 0.6);
 
-    lines = clamp(lines * (0.85 + mInf * 0.6), 0.0, 1.0);
+    lines = clamp(lines * (0.9 + mInf * 0.3), 0.0, 1.0);
 
     // Compose
     vec3 col = base;
@@ -230,14 +232,15 @@ render();
 /* ----------------------------------------------------------
    3) Per-scene look — orientation (H/V), paper tint, dark invert
    ---------------------------------------------------------- */
+// Horizontal lines only throughout — no orientation switching (per user)
 const SCENE_LOOK = {
-  1: { orient: 0, base: [0.997, 0.994, 0.989], invert: 0 }, // Hero      — H, warm cream
-  2: { orient: 1, base: [1.000, 0.998, 0.994], invert: 0 }, // Promise   — V, neutral
-  3: { orient: 0, base: [0.992, 0.995, 1.000], invert: 0 }, // Modules   — H, cool ivory
-  4: { orient: 1, base: [0.998, 0.995, 0.988], invert: 0 }, // Why       — V, warm
-  5: { orient: 0, base: [0.997, 0.994, 0.989], invert: 1 }, // Compare   — H, full black
-  6: { orient: 1, base: [0.999, 0.992, 0.984], invert: 0 }, // Voices    — V, peach
-  7: { orient: 0, base: [1.000, 1.000, 1.000], invert: 0 }, // CTA       — H, pure white
+  1: { orient: 0, base: [0.997, 0.994, 0.989], invert: 0 }, // Hero      — warm cream
+  2: { orient: 0, base: [1.000, 0.998, 0.994], invert: 0 }, // Promise   — neutral
+  3: { orient: 0, base: [0.992, 0.995, 1.000], invert: 0 }, // Modules   — cool ivory
+  4: { orient: 0, base: [0.998, 0.995, 0.988], invert: 0 }, // Why       — warm
+  5: { orient: 0, base: [0.997, 0.994, 0.989], invert: 1 }, // Compare   — full black
+  6: { orient: 0, base: [0.999, 0.992, 0.984], invert: 0 }, // Voices    — peach
+  7: { orient: 0, base: [1.000, 1.000, 1.000], invert: 0 }, // CTA       — pure white
 };
 
 function applySceneLook(id) {
@@ -483,21 +486,13 @@ document.querySelectorAll("[data-marquee]").forEach((track) => {
   const clone = track.innerHTML;
   track.innerHTML = clone + clone;
   const direction = track.dataset.direction === "reverse" ? 1 : -1;
-  // animate from 0 to -50% of full width (since we duplicated, this loops)
   const half = () => -track.scrollWidth / 2;
+  // Slow steady drift — no scroll-velocity coupling (was causing motion sickness)
   gsap.to(track, {
     x: () => direction * Math.abs(half()),
-    duration: 28,
+    duration: 80,
     ease: "none",
     repeat: -1,
-  });
-  // Scroll-coupled boost: lenis scroll velocity speeds up the marquee
-  const baseSpeed = direction * 0.4;
-  let extra = 0;
-  lenis.on("scroll", ({ velocity }) => { extra = velocity * direction * 0.15; });
-  gsap.ticker.add(() => {
-    const tl = gsap.getTweensOf(track)[0];
-    if (tl) tl.timeScale(1 + Math.abs(extra) * 0.4);
   });
 });
 
