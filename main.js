@@ -25,6 +25,9 @@ gsap.ticker.add((t) => lenis.raf(t * 1000));
 gsap.ticker.lagSmoothing(0);
 window.__lenis = lenis;
 
+let scrollTarget = 0;   // updated from lenis (normalized px → screens)
+lenis.on("scroll", ({ scroll }) => { scrollTarget = scroll / window.innerHeight; });
+
 /* ----------------------------------------------------------
    2) THREE.JS — paper texture + cursor light, monochrome
    ---------------------------------------------------------- */
@@ -42,6 +45,7 @@ const uniforms = {
   uMouseVel: { value: 0 },
   uRes:      { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
   uInvert:   { value: 0 }, // 0 = light paper, 1 = dark scene
+  uScroll:   { value: 0 }, // smoothed scroll position in CSS px
 };
 
 const vertexShader = `
@@ -57,6 +61,7 @@ const fragmentShader = `
   uniform float uMouseVel;
   uniform vec2  uRes;
   uniform float uInvert;
+  uniform float uScroll;
 
   vec2 hash(vec2 p) {
     p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -84,19 +89,14 @@ const fragmentShader = `
   // Brand red — matches data3s.com.tr logo
   const vec3 BRAND_RED = vec3(0.882, 0.145, 0.169);
 
-  // Distance from p to infinite line through center with direction dir
-  float infiniteLineDist(vec2 p, vec2 center, vec2 dir) {
-    vec2 d = p - center;
-    return abs(d.x * dir.y - d.y * dir.x);
+  // Distance to one horizontal line at y = pos (line spans full width)
+  float hLine(float py, float pos, float thickness) {
+    float d = abs(py - pos);
+    return 1.0 - smoothstep(thickness * 0.5, thickness * 1.5, d);
   }
-
-  // Render one straight line, returns intensity 0..1
-  // angle in radians, perpOffset in screen units (drifts)
-  float straightLine(vec2 p, float aspect, float angle, float perpOffset, float thickness) {
-    vec2 dir = vec2(cos(angle), sin(angle));
-    vec2 perp = vec2(-dir.y, dir.x);
-    vec2 center = vec2(aspect * 0.5, 0.5) + perp * perpOffset;
-    float d = infiniteLineDist(p, center, dir);
+  // Distance to one vertical line at x = pos (line spans full height)
+  float vLine(float px, float pos, float thickness) {
+    float d = abs(px - pos);
     return 1.0 - smoothstep(thickness * 0.5, thickness * 1.5, d);
   }
 
@@ -113,45 +113,60 @@ const fragmentShader = `
     float t = uTime;
     float lines = 0.0;
 
-    // 10 straight thin lines, each drifts perpendicular to itself
-    // Mixed angles: mostly diagonal/horizontal, a couple steep
-    // (angle, baseOffset, speed, thickness)
-    float angles[10];     angles[0]=0.10; angles[1]=1.50; angles[2]=0.42; angles[3]=2.05; angles[4]=0.95;
-                          angles[5]=1.80; angles[6]=0.28; angles[7]=2.50; angles[8]=1.20; angles[9]=0.65;
-    float speeds[10];     speeds[0]=0.035; speeds[1]=0.022; speeds[2]=0.048; speeds[3]=0.018; speeds[4]=0.040;
-                          speeds[5]=0.028; speeds[6]=0.052; speeds[7]=0.020; speeds[8]=0.036; speeds[9]=0.044;
-    float phases[10];     phases[0]=0.11; phases[1]=0.43; phases[2]=0.71; phases[3]=0.27; phases[4]=0.59;
-                          phases[5]=0.83; phases[6]=0.17; phases[7]=0.51; phases[8]=0.91; phases[9]=0.35;
-    float thicks[10];     thicks[0]=0.0015; thicks[1]=0.0020; thicks[2]=0.0012; thicks[3]=0.0025; thicks[4]=0.0014;
-                          thicks[5]=0.0018; thicks[6]=0.0011; thicks[7]=0.0022; thicks[8]=0.0016; thicks[9]=0.0013;
+    // Scroll-driven motion. uScroll is normalized into a continuous offset.
+    // Horizontal lines shift in Y (parallax with scroll), vertical lines
+    // shift in X. Slight time drift keeps motion alive when scroll stops.
+    float s = uScroll;
 
-    // Span over which each line drifts (full screen width and a bit more)
-    float span = aspect * 1.4;
+    // -------- 6 horizontal lines --------
+    // Each: base position (y), parallax factor relative to scroll, slow drift, thickness
+    float hBase[6];   hBase[0]=0.12; hBase[1]=0.28; hBase[2]=0.41; hBase[3]=0.58; hBase[4]=0.74; hBase[5]=0.88;
+    float hPx[6];     hPx[0]=0.45;   hPx[1]=0.22;   hPx[2]=0.68;   hPx[3]=0.31;   hPx[4]=0.55;   hPx[5]=0.18;
+    float hDrift[6];  hDrift[0]=0.012; hDrift[1]=0.008; hDrift[2]=0.015; hDrift[3]=0.005; hDrift[4]=0.010; hDrift[5]=0.018;
+    float hThick[6];  hThick[0]=0.0014; hThick[1]=0.0020; hThick[2]=0.0011; hThick[3]=0.0022; hThick[4]=0.0016; hThick[5]=0.0013;
 
-    for (int i = 0; i < 10; i++) {
-      // drift perpOffset across [-span/2, +span/2] in a wrapping cycle
-      float cycle = mod(phases[i] + t * speeds[i], 1.0);
-      float perpOffset = (cycle - 0.5) * span;
-      // line intensity
-      float L = straightLine(p, aspect, angles[i], perpOffset, thicks[i]);
-      // fade lines near the wrap edges (avoid hard pop)
-      float edgeFade = smoothstep(0.0, 0.08, cycle) * smoothstep(1.0, 0.92, cycle);
-      lines += L * edgeFade;
+    for (int i = 0; i < 6; i++) {
+      float raw = hBase[i] + s * hPx[i] + t * hDrift[i];
+      float y = mod(raw, 1.2) - 0.1;          // wrap with a hair of margin
+      float L = hLine(p.y, y, hThick[i]);
+      // soft fade near wrap edges
+      float cycle = mod(raw, 1.2) / 1.2;
+      L *= smoothstep(0.0, 0.05, cycle) * smoothstep(1.0, 0.95, cycle);
+      lines += L;
     }
 
-    // Cursor: subtle local brightening of any line near pointer
+    // -------- 6 vertical lines --------
+    // Each: base position (x in screen-aspect units), parallax factor, slow drift, thickness
+    // Half drift right, half drift left
+    float vBase[6];   vBase[0]=0.15; vBase[1]=0.32; vBase[2]=0.49; vBase[3]=0.66; vBase[4]=0.81; vBase[5]=0.93;
+    float vPx[6];     vPx[0]=-0.18;  vPx[1]= 0.26;  vPx[2]=-0.12;  vPx[3]= 0.32;  vPx[4]=-0.22;  vPx[5]= 0.16;
+    float vDrift[6];  vDrift[0]=0.006; vDrift[1]=-0.011; vDrift[2]=0.014; vDrift[3]=-0.007; vDrift[4]=0.009; vDrift[5]=-0.013;
+    float vThick[6];  vThick[0]=0.0013; vThick[1]=0.0018; vThick[2]=0.0011; vThick[3]=0.0021; vThick[4]=0.0015; vThick[5]=0.0012;
+
+    float aw = aspect; // width in aspect units
+    for (int i = 0; i < 6; i++) {
+      float raw = vBase[i] * aw + s * vPx[i] * aw + t * vDrift[i] * aw;
+      float spanX = aw + 0.2;
+      float x = mod(raw, spanX) - 0.1;
+      float L = vLine(p.x, x, vThick[i]);
+      float cycle = mod(raw, spanX) / spanX;
+      L *= smoothstep(0.0, 0.05, cycle) * smoothstep(1.0, 0.95, cycle);
+      lines += L;
+    }
+
+    // Cursor: local brightening
     vec2 mp = uMouse;
     mp.x = mp.x * aspect;
     float mdist = distance(p, mp);
     float mInf = exp(-mdist * 4.0) * (0.3 + uMouseVel * 1.4);
 
-    lines = clamp(lines * (0.85 + mInf * 0.5), 0.0, 1.0);
+    lines = clamp(lines * (0.85 + mInf * 0.6), 0.0, 1.0);
 
     // Compose
     vec3 col = base;
-    col = mix(col, BRAND_RED, lines * 0.82);
+    col = mix(col, BRAND_RED, lines * 0.85);
 
-    // Subtle paper grain (very small)
+    // Subtle paper grain
     float grain = (hash(uv * uRes + t * 0.4).x - 0.5) * 0.012;
     col += grain;
 
@@ -195,6 +210,7 @@ window.addEventListener("resize", () => {
 });
 
 const clock = new THREE.Clock();
+let scrollSmooth = 0;
 function render() {
   uniforms.uTime.value = clock.getElapsedTime();
   mouseSmooth.lerp(mouseTarget, 0.08);
@@ -202,6 +218,9 @@ function render() {
   mvSmooth += (mvTarget - mvSmooth) * 0.08;
   mvTarget *= 0.92;
   uniforms.uMouseVel.value = mvSmooth;
+  // smooth scroll-driven uniform — lines shift with scroll
+  scrollSmooth += (scrollTarget - scrollSmooth) * 0.12;
+  uniforms.uScroll.value = scrollSmooth;
   renderer.render(scene, camera);
   requestAnimationFrame(render);
 }
