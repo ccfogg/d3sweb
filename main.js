@@ -154,20 +154,16 @@ const fragmentShader = `
       vLines += L;
     }
 
-    // Horizontal lines only
-    float lines = hLines;
+    // Lines removed per user request — flat paper only.
+    // (hLines/vLines computed above are intentionally discarded.)
 
-    // Subtle cursor brightening (no positional motion of lines)
+    // Very subtle cursor halo on the paper (no red)
     vec2 mp = uMouse;
     mp.x = mp.x * aspect;
     float mdist = distance(p, mp);
-    float mInf = exp(-mdist * 4.0) * (0.2 + uMouseVel * 0.6);
+    float halo = exp(-mdist * 3.0) * 0.04;
 
-    lines = clamp(lines * (0.9 + mInf * 0.3), 0.0, 1.0);
-
-    // Compose
-    vec3 col = base;
-    col = mix(col, BRAND_RED, lines * 0.85);
+    vec3 col = base + vec3(halo) + vec3(hLines * 0.0 + vLines * 0.0);
 
     // Subtle paper grain
     float grain = (hash(uv * uRes + t * 0.4).x - 0.5) * 0.012;

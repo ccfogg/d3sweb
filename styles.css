@@ -440,7 +440,7 @@ main { position: relative; z-index: 1; }
    SCENE 2 — PROMISE (pinned big statement)
    ============================================================ */
 .scene-promise {
-  height: 220vh;
+  height: 160vh;
   position: relative;
 }
 .promise-stage {
