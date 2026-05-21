@@ -3,20 +3,23 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>D3S — Orta Ölçek Farma için CRM Hikayesi</title>
-<meta name="description" content="D3S Inception CRM: Orta ölçek farma şirketleri için 4-12 haftada hayata geçen, sezgisel, mobil öncelikli CRM platformu." />
+<title>D3S Inception CRM — Orta Pazar Farma için Hikaye</title>
+<meta name="description" content="D3S Inception CRM: Orta ölçek farma için 4-12 haftada hayata geçen, sezgisel, mobil-öncelikli pharma CRM platformu." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
 
 <canvas id="bg-canvas" aria-hidden="true"></canvas>
 
+<div class="progress-rail" aria-hidden="true"><div class="progress-fill"></div></div>
+
 <nav class="nav">
   <a href="#hero" class="brand">
-    <span class="brand-mark">D3S</span>
+    <span class="brand-dot"></span>
+    <span>D3S</span>
     <span class="brand-sub">Inception CRM</span>
   </a>
   <ul class="nav-links">
@@ -28,47 +31,75 @@
   </ul>
 </nav>
 
-<main id="smooth-content">
+<main>
 
   <!-- SCENE 1: HERO -->
-  <section id="hero" class="scene scene-hero" data-palette="dawn">
+  <section id="hero" class="scene scene-hero" data-scene="1">
     <div class="scene-inner">
-      <span class="eyebrow reveal">Bölüm I — Başlangıç</span>
-      <h1 class="display reveal">
-        Orta ölçek farma için<br />
-        <em>kurumsal güç</em>, kurumsal yük yok.
-      </h1>
-      <p class="lead reveal">
-        Inception CRM, HCP etkileşimini hızlandıran, 4–12 haftada hayata geçen ve büyüdükçe ölçeklenen
-        bir farma CRM platformudur. Şeffaf fiyatlandırma, satıcı bağımlılığı yok.
-      </p>
-      <div class="hero-meta reveal">
-        <div><span class="num">€40–100</span><span class="lbl">kullanıcı / ay</span></div>
-        <div><span class="num">4–12</span><span class="lbl">hafta canlıya alma</span></div>
-        <div><span class="num">10</span><span class="lbl">entegre modül</span></div>
+      <div class="hero-grid">
+        <div class="hero-text">
+          <span class="eyebrow reveal">Bölüm I — Açılış</span>
+          <h1 class="display reveal">
+            Orta ölçek farma için<br />
+            <span class="grad">çevik</span> bir CRM hikayesi.
+          </h1>
+          <p class="lead reveal">
+            Inception CRM, HCP etkileşimini hızlandıran, 4–12 haftada hayata geçen ve büyüdükçe ölçeklenen
+            farma-odaklı bir CRM platformudur. Şeffaf, sade, satıcı bağımlılığı yok.
+          </p>
+
+          <div class="hero-meta reveal">
+            <div><span class="num" data-count="10">10</span><span class="lbl">entegre modül</span></div>
+            <div><span class="num">4–12</span><span class="lbl">hafta canlıya alma</span></div>
+            <div><span class="num">GDPR</span><span class="lbl">uyumlu altyapı</span></div>
+          </div>
+
+          <div class="hero-ctas reveal">
+            <a class="btn btn-primary" href="#contact">Demo Rezervasyonu →</a>
+            <a class="btn btn-ghost" href="#modules">Modülleri keşfet</a>
+          </div>
+
+          <div class="hero-badges reveal">
+            <img src="./assets/badges/g2-1.svg" alt="G2 — En Yüksek Kullanıcı Adaptasyonu" />
+            <img src="./assets/badges/g2-2.svg" alt="G2 — En Hızlı Kurulum" />
+            <img src="./assets/badges/g2-3.svg" alt="G2 — En İyi Destek" />
+            <img src="./assets/badges/g2-4.svg" alt="G2 — High Performer" />
+            <img src="./assets/badges/g2-5.svg" alt="G2 — Users Love Us" />
+          </div>
+        </div>
+
+        <div class="hero-visual reveal">
+          <div class="float-tag"><span class="dot"></span>Saha ekipleri çevrimiçi</div>
+          <img class="phone" src="./assets/phone-hcp.webp" alt="Inception CRM mobil arayüzü" />
+        </div>
       </div>
-      <div class="hero-ctas reveal">
-        <a class="btn btn-primary" href="#contact">Demo Rezervasyonu</a>
-        <a class="btn btn-ghost" href="#modules">Hikayeyi Keşfet ↓</a>
-      </div>
-      <div class="badges reveal">
-        <span>G2 — En Yüksek Kullanıcı Adaptasyonu</span>
-        <span>En Hızlı Kurulum</span>
-        <span>Kullanıcılar Bizi Seviyor</span>
-      </div>
-    </div>
-    <div class="scroll-cue" aria-hidden="true">
-      <span>kaydır</span>
-      <div class="cue-line"></div>
     </div>
   </section>
 
+  <!-- Pharma logo strip -->
+  <div class="logo-strip" aria-label="Müşteriler">
+    <div class="logo-strip-inner">
+      <div class="logo-strip-label">Avrupa'nın önde gelen farma şirketleri Inception CRM kullanıyor</div>
+      <img src="./assets/logos/Phoenix.png" alt="Phoenix" />
+      <img src="./assets/logos/Novartis.png" alt="Novartis" />
+      <img src="./assets/logos/sandoz.png" alt="Sandoz" />
+      <img src="./assets/logos/Glenmark.png" alt="Glenmark" />
+      <img src="./assets/logos/Medochemie.png" alt="Medochemie" />
+      <img src="./assets/logos/easyMed.png" alt="easyMed" />
+      <img src="./assets/logos/Agel.png" alt="Agel" />
+      <img src="./assets/logos/Farmak.png" alt="Farmak" />
+      <img src="./assets/logos/accord_.png" alt="Accord" />
+      <img src="./assets/logos/Viatris.png" alt="Viatris" />
+      <img src="./assets/logos/senimed.png" alt="Senimed" />
+    </div>
+  </div>
+
   <!-- SCENE 2: PROMISE -->
-  <section class="scene scene-promise" data-palette="ember">
+  <section class="scene" data-scene="2">
     <div class="scene-inner narrow">
       <span class="eyebrow reveal">Bölüm II — Söz</span>
       <h2 class="display reveal">
-        Aylar süren kurulumlar yerine, <em>haftalar içinde</em> sahada.
+        Aylar süren kurulumlar yerine, <span class="accent">haftalar içinde</span> sahada.
       </h2>
       <p class="lead reveal">
         Karmaşık kurumsal CRM'ler vaatlerle başlar, takvimlerle biter. Biz başka bir hikaye yazıyoruz:
@@ -76,21 +107,25 @@
       </p>
       <ul class="promise-list">
         <li class="reveal"><span>01</span> GDPR uyumlu altyapı</li>
-        <li class="reveal"><span>02</span> Büyüdükçe ölçeklenen mimari</li>
-        <li class="reveal"><span>03</span> Tek fiyat, gizli kalem yok</li>
-        <li class="reveal"><span>04</span> Satıcı bağımlılığı sıfır</li>
+        <li class="reveal"><span>02</span> Büyüdükçe ölçeklenir</li>
+        <li class="reveal"><span>03</span> Şirket içinde yönetilir</li>
+        <li class="reveal"><span>04</span> Satıcı bağımlılığı yok</li>
       </ul>
     </div>
   </section>
 
   <!-- SCENE 3: MODULES -->
-  <section id="modules" class="scene scene-modules" data-palette="dusk">
+  <section id="modules" class="scene" data-scene="3">
     <div class="scene-inner">
-      <span class="eyebrow reveal">Bölüm III — On Modül</span>
-      <h2 class="display reveal">Bir CRM değil, <em>on entegre sahne</em>.</h2>
-      <p class="lead reveal">
-        Saha ekibinin her temas noktası için tasarlanmış, birbiriyle konuşan modüller.
-      </p>
+      <div class="modules-head">
+        <div>
+          <span class="eyebrow reveal">Bölüm III — On Modül</span>
+          <h2 class="display reveal">Bir CRM değil,<br /><span class="grad">on entegre sahne</span>.</h2>
+        </div>
+        <p class="lead reveal" style="max-width:42ch;margin:0;">
+          Saha ekibinin her temas noktası için tasarlanmış, birbiriyle konuşan modüller.
+        </p>
+      </div>
 
       <div class="modules-grid">
         <article class="module-card reveal">
@@ -102,38 +137,38 @@
         <article class="module-card reveal">
           <span class="m-num">02</span>
           <h3>Satış Planlayıcı</h3>
-          <p class="m-tag">Daha akıllı zaman yönetimi.</p>
-          <p>Bölgeleri sadece reçete hacmine değil, gerçek potansiyele göre dengeleyin.</p>
+          <p class="m-tag">Akıllı zaman yönetimi.</p>
+          <p>Bölgeleri sadece hacme değil, gerçek potansiyele göre dengeleyin.</p>
         </article>
         <article class="module-card reveal">
           <span class="m-num">03</span>
           <h3>Görev Yönetimi</h3>
           <p class="m-tag">E-posta yerine işbirliği.</p>
-          <p>Ekipler ve paylaşılan hesaplar arasında görev ve istekleri koordine edin.</p>
+          <p>Ekipler ve paylaşılan hesaplar arasında görevleri koordine edin.</p>
         </article>
         <article class="module-card reveal">
           <span class="m-num">04</span>
           <h3>Uzaktan Ziyaret</h3>
           <p class="m-tag">Müşterinizle her yerde.</p>
-          <p>Eklenti gerekmeden, CRM içinden HCP'lerle sanal görüşme yapın.</p>
+          <p>Eklenti gerekmeden CRM içinden sanal HCP görüşmeleri.</p>
         </article>
         <article class="module-card reveal">
           <span class="m-num">05</span>
           <h3>CLM & Medya</h3>
           <p class="m-tag">Onaylı içeriği güvenle paylaşın.</p>
-          <p>Onaylı içerikleri ajans olmadan oluşturun, sunun ve paylaşın.</p>
+          <p>Onaylı içerikleri ajans olmadan oluşturun, sunun, paylaşın.</p>
         </article>
         <article class="module-card reveal">
           <span class="m-num">06</span>
           <h3>Onay Akışları</h3>
-          <p class="m-tag">Projeleri, sözleşmeleri yönetin.</p>
+          <p class="m-tag">Projeler, sözleşmeler, etkinlikler.</p>
           <p>Etkinlik ve sözleşmeler için uyumlu otomatik iş akışları.</p>
         </article>
         <article class="module-card reveal">
           <span class="m-num">07</span>
           <h3>Sipariş Yönetimi</h3>
           <p class="m-tag">Yaşam bilimleri için gelişmiş.</p>
-          <p>Her satış noktasında sipariş oluşturun, zenginleştirin ve takip edin.</p>
+          <p>Her satış noktasında sipariş oluşturun, takip edin.</p>
         </article>
         <article class="module-card reveal">
           <span class="m-num">08</span>
@@ -145,7 +180,7 @@
           <span class="m-num">09</span>
           <h3>Saha Giderleri</h3>
           <p class="m-tag">Hareket halinde raporlayın.</p>
-          <p>Temsilcilerin saha harcamalarını anlık olarak yakalayın ve bütçeyi yönetin.</p>
+          <p>Temsilcilerin saha harcamalarını anlık yakalayın.</p>
         </article>
         <article class="module-card reveal">
           <span class="m-num">10</span>
@@ -157,42 +192,54 @@
     </div>
   </section>
 
-  <!-- SCENE 4: WHY US -->
-  <section id="why" class="scene scene-why" data-palette="aurora">
+  <!-- SCENE 4: WHY -->
+  <section id="why" class="scene" data-scene="4">
     <div class="scene-inner">
-      <span class="eyebrow reveal">Bölüm IV — Neden Biz</span>
-      <h2 class="display reveal">Ekipler neden <em>Inception</em>'ı seçiyor?</h2>
+      <div class="why-head">
+        <span class="eyebrow reveal">Bölüm IV — Neden Inception</span>
+        <h2 class="display reveal">Ekipler neden <span class="accent">Inception</span>'ı seçiyor?</h2>
+      </div>
 
       <div class="why-grid">
         <div class="why-card reveal">
-          <span class="why-i">⟶</span>
-          <h3>Hızlı başlayın</h3>
-          <p>6–24 ay değil, 4–12 haftada canlı.</p>
+          <div class="why-mark">↑</div>
+          <div>
+            <h3>Hızlı başlayın</h3>
+            <p>6–24 ay süren kurumsal projeler yerine 4–12 hafta içinde canlıya alın. Pazara hızlı çıkış, hızlı geri dönüş.</p>
+          </div>
         </div>
         <div class="why-card reveal">
-          <span class="why-i">◇</span>
-          <h3>Şirket içinde yönetin</h3>
-          <p>Dış danışman gerek yok, doğrudan maliyet tasarrufu.</p>
+          <div class="why-mark">◇</div>
+          <div>
+            <h3>Şirket içinde yönetin</h3>
+            <p>Dış danışman partner zincirine gerek yok. CRM'i kendi ekibinizle yönetin, maliyetlerinizi düşürün.</p>
+          </div>
         </div>
         <div class="why-card reveal">
-          <span class="why-i">∞</span>
-          <h3>Gerçek zamanlı çalışın</h3>
-          <p>Senkronizasyon gecikmesi olmayan online-first CRM.</p>
+          <div class="why-mark">∞</div>
+          <div>
+            <h3>Gerçek zamanlı çalışın</h3>
+            <p>Senkronizasyon gecikmesi olmayan online-first CRM. Saha temsilcisi etkileşimi anında merkeze yansır.</p>
+          </div>
         </div>
         <div class="why-card reveal">
-          <span class="why-i">€</span>
-          <h3>Öngörülebilir maliyet</h3>
-          <p>Tek fiyat, her şey dahil. Şeffaf ve sabit.</p>
+          <div class="why-mark">✓</div>
+          <div>
+            <h3>Öngörülebilir, şeffaf</h3>
+            <p>Tek paket, her şey dahil. Sürpriz eklenti faturası yok, satıcı bağımlılığı yok, veriniz size ait.</p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- SCENE 5: COMPARISON -->
-  <section id="compare" class="scene scene-compare" data-palette="violet">
+  <section id="compare" class="scene" data-scene="5">
     <div class="scene-inner">
-      <span class="eyebrow reveal">Bölüm V — Karşılaştırma</span>
-      <h2 class="display reveal">Inception CRM <em>vs.</em> Geleneksel Kurumsal CRM</h2>
+      <div class="compare-head">
+        <span class="eyebrow reveal">Bölüm V — Karşılaştırma</span>
+        <h2 class="display reveal">Inception CRM <span class="accent">vs.</span> Geleneksel Kurumsal CRM</h2>
+      </div>
 
       <div class="compare-table reveal">
         <div class="ct-row ct-head">
@@ -202,69 +249,78 @@
         </div>
         <div class="ct-row"><div>Değer üretme süresi</div><div>4–12 hafta</div><div>Aylar / yıllar</div></div>
         <div class="ct-row"><div>Yönetim</div><div>Şirket içi</div><div>BT ekipleri & partnerler</div></div>
-        <div class="ct-row"><div>Lansman sonrası değişiklik</div><div>Kolay</div><div>Yavaş & riskli</div></div>
+        <div class="ct-row"><div>Lansman sonrası değişiklik</div><div>Kolay</div><div>Yavaş, riskli</div></div>
         <div class="ct-row"><div>Özellik seti</div><div>10 farma modülü, şişirme yok</div><div>Şişirilmiş, kullanılmayan</div></div>
         <div class="ct-row"><div>Ekip benimsemesi</div><div>Yüksek, mobil-öncelikli</div><div>Düşük, karmaşık UX</div></div>
         <div class="ct-row"><div>Veri güncelliği</div><div>Gerçek zamanlı</div><div>Gecikmeli senkron</div></div>
         <div class="ct-row"><div>Veri güvenilirliği</div><div>Denetime hazır</div><div>Tartışmalı doğruluk</div></div>
-        <div class="ct-row"><div>Zaman içinde maliyet</div><div>Sabit, şeffaf</div><div>Eklentilerle artar</div></div>
-        <div class="ct-row"><div>Veri kontrolü</div><div>Sahiplik / dışa aktarım</div><div>Kısıtlı erişim</div></div>
-        <div class="ct-row"><div>Satıcı bağımlılığı</div><div>Yok</div><div>Uzun vadeli bağımlılık</div></div>
+        <div class="ct-row"><div>Veri kontrolü</div><div>Sahiplik, dışa aktarım</div><div>Kısıtlı erişim</div></div>
+        <div class="ct-row"><div>Satıcı bağımlılığı</div><div>Yok</div><div>Uzun vadeli</div></div>
       </div>
     </div>
   </section>
 
   <!-- SCENE 6: VOICES -->
-  <section id="voices" class="scene scene-voices" data-palette="ocean">
+  <section id="voices" class="scene" data-scene="6">
     <div class="scene-inner">
-      <span class="eyebrow reveal">Bölüm VI — Sesler</span>
-      <h2 class="display reveal">Müşterilerimiz ne diyor?</h2>
+      <div class="voices-head">
+        <span class="eyebrow reveal">Bölüm VI — Sesler</span>
+        <h2 class="display reveal">Müşterilerimiz <span class="grad">ne diyor</span>?</h2>
+      </div>
 
       <div class="voices-grid">
         <blockquote class="voice reveal">
-          <p>"Sezgiselliği ve kullanım kolaylığı… teknik yeterliliklerinden bağımsız olarak ekibimizin tüm üyeleri için erişilebilir kılıyor."</p>
-          <footer>— Dorota R., CEO, Polonya</footer>
+          <div class="voice-mark">"</div>
+          <p>Sezgiselliği ve kullanım kolaylığı, teknik yeterliliklerinden bağımsız olarak ekibimizin tüm üyeleri için erişilebilir kılıyor.</p>
+          <footer><strong>Dorota R.</strong>CEO · Polonya</footer>
         </blockquote>
         <blockquote class="voice reveal">
-          <p>"Bu yazılımın arkasındaki insanlar farma pazarının karmaşıklığını anlıyor ve sürekli değişen ortama hızla adapte oluyorlar."</p>
-          <footer>— Yiannakis M., Ticari Direktör, Kıbrıs</footer>
+          <div class="voice-mark">"</div>
+          <p>Bu yazılımın arkasındaki insanlar farma pazarının karmaşıklığını anlıyor ve sürekli değişen ortama hızla adapte oluyorlar.</p>
+          <footer><strong>Yiannakis M.</strong>Ticari Direktör · Kıbrıs</footer>
         </blockquote>
         <blockquote class="voice reveal">
-          <p>"İşin tüm değişimleri ve ihtiyaçları, tüm kullanıcılar için çevik, hızlı ve etkili bir programa yansıyor."</p>
-          <footer>— Jose Antonio V., SFE Yöneticisi, İspanya</footer>
+          <div class="voice-mark">"</div>
+          <p>İşin tüm değişimleri ve ihtiyaçları, tüm kullanıcılar için çevik, hızlı ve etkili bir programa yansıyor.</p>
+          <footer><strong>Jose Antonio V.</strong>SFE Yöneticisi · İspanya</footer>
         </blockquote>
         <blockquote class="voice reveal">
-          <p>"Tüm kilit metrikleri izlemek ve ölçmek için hayati analizler elde edip raporlar oluşturabiliyoruz."</p>
-          <footer>— Crispin W., Ulusal Satış Müdürü, İngiltere</footer>
+          <div class="voice-mark">"</div>
+          <p>Tüm kilit metrikleri izlemek ve ölçmek için hayati analizler elde edip raporlar oluşturabiliyoruz.</p>
+          <footer><strong>Crispin W.</strong>Ulusal Satış Müdürü · İngiltere</footer>
         </blockquote>
         <blockquote class="voice reveal">
-          <p>"Inception CRM bana farklı seviyelerde hızlı, doğru ve objektif bilgi veriyor; satış ekibimizin işini doğru değerlendirmemi sağlıyor."</p>
-          <footer>— Darius D., Ülke Müdürü, Çekya</footer>
+          <div class="voice-mark">"</div>
+          <p>Inception CRM bana farklı seviyelerde hızlı, doğru ve objektif bilgi veriyor; satış ekibimizi doğru değerlendirmemi sağlıyor.</p>
+          <footer><strong>Darius D.</strong>Ülke Müdürü · Çekya</footer>
         </blockquote>
         <blockquote class="voice reveal">
-          <p>"Çok uyarlanabilir, amaca özel ve uygun. Sade ama etkili, son derece kullanıcı dostu. Ekiple çalışmak bir zevk."</p>
-          <footer>— Jana K., Ürün Müdürü, Slovakya</footer>
+          <div class="voice-mark">"</div>
+          <p>Çok uyarlanabilir, amaca özel ve uygun. Sade ama etkili, son derece kullanıcı dostu. Ekiple çalışmak bir zevk.</p>
+          <footer><strong>Jana K.</strong>Ürün Müdürü · Slovakya</footer>
         </blockquote>
       </div>
     </div>
   </section>
 
   <!-- SCENE 7: CTA -->
-  <section id="contact" class="scene scene-cta" data-palette="finale">
+  <section id="contact" class="scene scene-cta" data-scene="7">
     <div class="scene-inner narrow">
       <span class="eyebrow reveal">Bölüm VII — Son Sahne</span>
-      <h2 class="display reveal">Hikayenizin <em>bir sonraki bölümünü</em> birlikte yazalım.</h2>
+      <h2 class="display reveal">Hikayenizin <span class="grad">bir sonraki bölümünü</span> birlikte yazalım.</h2>
       <p class="lead reveal">
-        Müşteri etkileşimini nasıl iyileştireceğinizi ve satış ekibi performansını nasıl artıracağınızı keşfedin.
+        Müşteri etkileşimini nasıl iyileştireceğinizi ve satış ekibi performansını nasıl artıracağınızı
+        kişiselleştirilmiş bir demoda gösterelim.
       </p>
 
       <form class="cta-form reveal" onsubmit="event.preventDefault(); this.querySelector('button').textContent='Teşekkürler — yakında dönüş yapacağız';">
-        <input type="email" required placeholder="kurumsal@e-posta.com" aria-label="E-posta" />
-        <button type="submit" class="btn btn-primary">Kişiselleştirilmiş Demo İste</button>
+        <input type="email" required placeholder="kurumsal e-posta adresiniz" aria-label="E-posta" />
+        <button type="submit" class="btn btn-primary">Kişiselleştirilmiş Demo İste →</button>
       </form>
 
       <div class="contact-meta reveal">
-        <a href="mailto:[email protected]">[email protected]</a>
+        <span>İletişim:</span>
+        <a href="mailto:info&#64;inceptioncrm.com">info&#64;inceptioncrm.com</a>
         <span>·</span>
         <span>D3S a.s. — Inception CRM</span>
       </div>
@@ -273,17 +329,22 @@
 
   <footer class="footer">
     <div class="foot-cols">
-      <div>
-        <div class="brand-mark big">D3S</div>
-        <p>Orta ölçek farma için CRM. 2026 © D3S a.s. / Tüm hakları saklıdır.</p>
+      <div class="foot-brand">
+        <div class="brand" style="font-size:24px;">
+          <span class="brand-dot"></span>
+          <span>D3S</span>
+          <span class="brand-sub">Inception CRM</span>
+        </div>
+        <p>Orta ölçek farma için hızlı, sezgisel, mobil-öncelikli CRM platformu.</p>
       </div>
       <div>
         <h4>Modüller</h4>
         <ul>
           <li>HCP Yönetimi</li>
           <li>Satış Planlayıcı</li>
-          <li>CLM & Medya</li>
+          <li>CLM &amp; Medya</li>
           <li>Satış Analitiği</li>
+          <li>Uzaktan Ziyaret</li>
         </ul>
       </div>
       <div>
@@ -305,22 +366,17 @@
         </ul>
       </div>
     </div>
+    <div class="foot-copy">
+      <span>© 2026 D3S a.s. — Tüm hakları saklıdır.</span>
+      <span>Made with care · Inception CRM</span>
+    </div>
   </footer>
 
 </main>
 
-<div class="progress-rail" aria-hidden="true"><div class="progress-fill"></div></div>
-
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://esm.sh/three@0.160.0",
-    "gsap": "https://esm.sh/gsap@3.12.5",
-    "gsap/ScrollTrigger": "https://esm.sh/gsap@3.12.5/ScrollTrigger",
-    "lenis": "https://esm.sh/lenis@1.0.42"
-  }
-}
-</script>
+<script src="./vendor/gsap.min.js"></script>
+<script src="./vendor/ScrollTrigger.min.js"></script>
+<script src="./vendor/lenis.min.js"></script>
 <script type="module" src="./main.js"></script>
 </body>
 </html>
