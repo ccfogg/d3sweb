@@ -77,8 +77,21 @@ const fragmentShader = `
   }
   float fbm(vec2 p) {
     float v = 0.0; float a = 0.5;
-    for (int i = 0; i < 4; i++) { v += a * noise(p); p *= 2.05; a *= 0.5; }
+    for (int i = 0; i < 5; i++) { v += a * noise(p); p *= 2.04; a *= 0.5; }
     return v;
+  }
+
+  // Brand red — matches data3s.com.tr logo
+  const vec3 BRAND_RED = vec3(0.882, 0.145, 0.169);
+
+  // One animated contour-line layer with given scale, speed, density, weight
+  float lineLayer(vec2 p, float scale, vec2 drift, float density, float weight) {
+    vec2 q = p * scale + drift;
+    float n = fbm(q);
+    // iso-contour: thin line where the noise crosses each (1/density) step
+    float band = abs(fract(n * density) - 0.5) * 2.0;
+    float aa   = fwidth(n * density) * weight;
+    return 1.0 - smoothstep(0.0, aa, band);
   }
 
   void main() {
@@ -87,44 +100,43 @@ const fragmentShader = `
     vec2 puv = uv;
     puv.x = (uv.x - 0.5) * aspect + 0.5;
 
-    // Light paper base (slightly warm cream) OR dark page (inverted)
+    // Bases: white paper (default) or rich black (compare scene)
     vec3 paperLight = vec3(0.996, 0.992, 0.985);
-    vec3 paperDark  = vec3(0.04, 0.04, 0.038);
+    vec3 paperDark  = vec3(0.035, 0.035, 0.033);
     vec3 base = mix(paperLight, paperDark, uInvert);
 
-    // very subtle organic paper warp (visible only at edges)
-    float t = uTime * 0.03;
-    float warp = fbm(puv * 1.2 + vec2(t, -t)) * 0.5 + 0.5;
-    float fiber = fbm(puv * 6.0 + vec2(t*0.5, t*0.7));
-
-    // Cursor halo — single warm light that follows pointer
+    // Cursor distortion of the field
     vec2 mp = uMouse;
     mp.x = (mp.x - 0.5) * aspect + 0.5;
-    vec2 sp = puv;
-    float mdist = distance(sp, mp);
-    float halo = exp(-mdist * 4.0);
-    float brush = exp(-mdist * 9.0) * (0.3 + uMouseVel * 1.2);
+    float mdist = distance(puv, mp);
+    float mInfluence = exp(-mdist * 2.5) * (0.5 + uMouseVel * 1.8);
 
+    // Three flowing layers at different scales and drift directions
+    float t = uTime;
+    vec2 dist = vec2(mInfluence * 0.6, mInfluence * 0.4);
+
+    float layerA = lineLayer(puv + dist * 0.4, 1.8, vec2( t*0.07, -t*0.05), 7.0,  1.4);
+    float layerB = lineLayer(puv + dist * 0.6, 3.2, vec2(-t*0.05,  t*0.08), 12.0, 1.6);
+    float layerC = lineLayer(puv + dist * 0.3, 0.9, vec2( t*0.03,  t*0.04), 4.0,  2.2);
+
+    // Combine — layers darker when summed but capped via screen blend
+    float lines = layerA * 0.55 + layerB * 0.35 + layerC * 0.65;
+    lines = clamp(lines, 0.0, 1.0);
+
+    // Cursor brightens lines near pointer (more visible signal there)
+    lines *= 0.55 + mInfluence * 0.8;
+
+    // Edge vignette so lines feel "framed" toward center
+    float edge = smoothstep(0.95, 0.45, distance(uv, vec2(0.5)));
+    lines *= 0.45 + 0.65 * edge;
+
+    // Compose: lay red lines onto base
     vec3 col = base;
+    col = mix(col, BRAND_RED, lines * 0.65);
 
-    // soft warm halo around cursor (or cool on dark)
-    vec3 haloColor = mix(vec3(1.0, 0.96, 0.88), vec3(0.18, 0.18, 0.16), uInvert);
-    col = mix(col, haloColor, halo * 0.18);
-
-    // brush — slightly brighter sharper near cursor center
-    vec3 brushColor = mix(vec3(1.0, 0.98, 0.94), vec3(0.32, 0.30, 0.26), uInvert);
-    col = mix(col, brushColor, brush * 0.35);
-
-    // very subtle warp shading on edges (depth)
-    float edgeFalloff = smoothstep(1.0, 0.3, distance(uv, vec2(0.5)));
-    col = mix(mix(paperLight * 0.985, paperDark * 1.4, uInvert), col, 0.5 + 0.5 * edgeFalloff);
-
-    // paper grain (more visible on light, subtle on dark)
-    float grain = (hash(uv * uRes + uTime * 0.4).x - 0.5) * 0.018;
-    col += grain * mix(1.0, 0.5, uInvert);
-
-    // fiber noise — extremely subtle long-grain paper fibers
-    col -= fiber * 0.008 * mix(1.0, 0.0, uInvert);
+    // Subtle paper grain
+    float grain = (hash(uv * uRes + t * 0.4).x - 0.5) * 0.014;
+    col += grain;
 
     gl_FragColor = vec4(col, 1.0);
   }
