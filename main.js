@@ -40,12 +40,14 @@ const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
 const uniforms = {
-  uTime:     { value: 0 },
-  uMouse:    { value: new THREE.Vector2(0.5, 0.5) },
-  uMouseVel: { value: 0 },
-  uRes:      { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-  uInvert:   { value: 0 }, // 0 = light paper, 1 = dark scene
-  uScroll:   { value: 0 }, // smoothed scroll position in CSS px
+  uTime:        { value: 0 },
+  uMouse:       { value: new THREE.Vector2(0.5, 0.5) },
+  uMouseVel:    { value: 0 },
+  uRes:         { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+  uInvert:      { value: 0 },     // 0 = light paper, 1 = dark scene
+  uScroll:      { value: 0 },     // smoothed scroll position (screens)
+  uOrientation: { value: 0 },     // 0 = horizontal lines only, 1 = vertical lines only
+  uBase:        { value: new THREE.Vector3(0.997, 0.994, 0.989) }, // per-scene paper tint
 };
 
 const vertexShader = `
@@ -62,6 +64,8 @@ const fragmentShader = `
   uniform vec2  uRes;
   uniform float uInvert;
   uniform float uScroll;
+  uniform float uOrientation;
+  uniform vec3  uBase;
 
   vec2 hash(vec2 p) {
     p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -105,56 +109,53 @@ const fragmentShader = `
     float aspect = uRes.x / uRes.y;
     vec2 p = vec2(uv.x * aspect, uv.y);
 
-    // Base: white paper (default) or rich black (compare scene)
-    vec3 paperLight = vec3(0.997, 0.994, 0.989);
-    vec3 paperDark  = vec3(0.035, 0.035, 0.033);
-    vec3 base = mix(paperLight, paperDark, uInvert);
+    // Per-scene paper tint (set by GSAP) OR rich black (compare scene)
+    vec3 paperDark = vec3(0.035, 0.035, 0.033);
+    vec3 base = mix(uBase, paperDark, uInvert);
 
     float t = uTime;
-    float lines = 0.0;
-
-    // Scroll-driven motion. uScroll is normalized into a continuous offset.
-    // Horizontal lines shift in Y (parallax with scroll), vertical lines
-    // shift in X. Slight time drift keeps motion alive when scroll stops.
     float s = uScroll;
 
-    // -------- 6 horizontal lines --------
-    // Each: base position (y), parallax factor relative to scroll, slow drift, thickness
-    float hBase[6];   hBase[0]=0.12; hBase[1]=0.28; hBase[2]=0.41; hBase[3]=0.58; hBase[4]=0.74; hBase[5]=0.88;
-    float hPx[6];     hPx[0]=0.45;   hPx[1]=0.22;   hPx[2]=0.68;   hPx[3]=0.31;   hPx[4]=0.55;   hPx[5]=0.18;
-    float hDrift[6];  hDrift[0]=0.012; hDrift[1]=0.008; hDrift[2]=0.015; hDrift[3]=0.005; hDrift[4]=0.010; hDrift[5]=0.018;
-    float hThick[6];  hThick[0]=0.0014; hThick[1]=0.0020; hThick[2]=0.0011; hThick[3]=0.0022; hThick[4]=0.0016; hThick[5]=0.0013;
+    // -------- 3 horizontal lines (uOrientation 0)
+    //  [0] = thick accent stroke, [1..2] = thin secondaries
+    float hBase[3];   hBase[0]=0.62;   hBase[1]=0.18;   hBase[2]=0.88;
+    float hPx[3];     hPx[0]=0.28;     hPx[1]=0.55;     hPx[2]=0.18;
+    float hDrift[3];  hDrift[0]=0.008; hDrift[1]=0.015; hDrift[2]=0.020;
+    float hThick[3];  hThick[0]=0.0042; hThick[1]=0.0013; hThick[2]=0.0011;
 
-    for (int i = 0; i < 6; i++) {
+    float hLines = 0.0;
+    for (int i = 0; i < 3; i++) {
       float raw = hBase[i] + s * hPx[i] + t * hDrift[i];
-      float y = mod(raw, 1.2) - 0.1;          // wrap with a hair of margin
+      float y = mod(raw, 1.2) - 0.1;
       float L = hLine(p.y, y, hThick[i]);
-      // soft fade near wrap edges
       float cycle = mod(raw, 1.2) / 1.2;
       L *= smoothstep(0.0, 0.05, cycle) * smoothstep(1.0, 0.95, cycle);
-      lines += L;
+      hLines += L;
     }
 
-    // -------- 6 vertical lines --------
-    // Each: base position (x in screen-aspect units), parallax factor, slow drift, thickness
-    // Half drift right, half drift left
-    float vBase[6];   vBase[0]=0.15; vBase[1]=0.32; vBase[2]=0.49; vBase[3]=0.66; vBase[4]=0.81; vBase[5]=0.93;
-    float vPx[6];     vPx[0]=-0.18;  vPx[1]= 0.26;  vPx[2]=-0.12;  vPx[3]= 0.32;  vPx[4]=-0.22;  vPx[5]= 0.16;
-    float vDrift[6];  vDrift[0]=0.006; vDrift[1]=-0.011; vDrift[2]=0.014; vDrift[3]=-0.007; vDrift[4]=0.009; vDrift[5]=-0.013;
-    float vThick[6];  vThick[0]=0.0013; vThick[1]=0.0018; vThick[2]=0.0011; vThick[3]=0.0021; vThick[4]=0.0015; vThick[5]=0.0012;
+    // -------- 3 vertical lines (uOrientation 1)
+    //  [0] = thick accent, [1..2] = thin secondaries (mixed drift direction)
+    float vBase[3];   vBase[0]=0.35;   vBase[1]=0.78;   vBase[2]=0.14;
+    float vPx[3];     vPx[0]=-0.20;    vPx[1]= 0.30;    vPx[2]= 0.16;
+    float vDrift[3];  vDrift[0]=0.007; vDrift[1]=-0.013; vDrift[2]=0.010;
+    float vThick[3];  vThick[0]=0.0040; vThick[1]=0.0012; vThick[2]=0.0010;
 
-    float aw = aspect; // width in aspect units
-    for (int i = 0; i < 6; i++) {
+    float aw = aspect;
+    float vLines = 0.0;
+    for (int i = 0; i < 3; i++) {
       float raw = vBase[i] * aw + s * vPx[i] * aw + t * vDrift[i] * aw;
       float spanX = aw + 0.2;
       float x = mod(raw, spanX) - 0.1;
       float L = vLine(p.x, x, vThick[i]);
       float cycle = mod(raw, spanX) / spanX;
       L *= smoothstep(0.0, 0.05, cycle) * smoothstep(1.0, 0.95, cycle);
-      lines += L;
+      vLines += L;
     }
 
-    // Cursor: local brightening
+    // Crossfade between H-only and V-only based on uOrientation (0..1)
+    float lines = mix(hLines, vLines, uOrientation);
+
+    // Cursor brightens lines locally
     vec2 mp = uMouse;
     mp.x = mp.x * aspect;
     float mdist = distance(p, mp);
@@ -227,19 +228,24 @@ function render() {
 render();
 
 /* ----------------------------------------------------------
-   3) Section detection — invert canvas for dark scene
+   3) Per-scene look — orientation (H/V), paper tint, dark invert
    ---------------------------------------------------------- */
-const compareSection = document.getElementById("compare");
-if (compareSection) {
-  ScrollTrigger.create({
-    trigger: compareSection,
-    start: "top 50%",
-    end:   "bottom 50%",
-    onEnter:     () => gsap.to(uniforms.uInvert, { value: 1, duration: 1.0, ease: "power2.inOut" }),
-    onLeave:     () => gsap.to(uniforms.uInvert, { value: 0, duration: 1.0, ease: "power2.inOut" }),
-    onEnterBack: () => gsap.to(uniforms.uInvert, { value: 1, duration: 1.0, ease: "power2.inOut" }),
-    onLeaveBack: () => gsap.to(uniforms.uInvert, { value: 0, duration: 1.0, ease: "power2.inOut" }),
-  });
+const SCENE_LOOK = {
+  1: { orient: 0, base: [0.997, 0.994, 0.989], invert: 0 }, // Hero      — H, warm cream
+  2: { orient: 1, base: [1.000, 0.998, 0.994], invert: 0 }, // Promise   — V, neutral
+  3: { orient: 0, base: [0.992, 0.995, 1.000], invert: 0 }, // Modules   — H, cool ivory
+  4: { orient: 1, base: [0.998, 0.995, 0.988], invert: 0 }, // Why       — V, warm
+  5: { orient: 0, base: [0.997, 0.994, 0.989], invert: 1 }, // Compare   — H, full black
+  6: { orient: 1, base: [0.999, 0.992, 0.984], invert: 0 }, // Voices    — V, peach
+  7: { orient: 0, base: [1.000, 1.000, 1.000], invert: 0 }, // CTA       — H, pure white
+};
+
+function applySceneLook(id) {
+  const look = SCENE_LOOK[id];
+  if (!look) return;
+  gsap.to(uniforms.uOrientation, { value: look.orient, duration: 1.6, ease: "power2.inOut" });
+  gsap.to(uniforms.uBase.value,  { x: look.base[0], y: look.base[1], z: look.base[2], duration: 1.6, ease: "power2.inOut" });
+  gsap.to(uniforms.uInvert,      { value: look.invert, duration: 1.0, ease: "power2.inOut" });
 }
 
 /* ----------------------------------------------------------
@@ -265,19 +271,95 @@ document.querySelectorAll("[data-scene]").forEach((sec) => {
     trigger: sec,
     start: "top 60%",
     end:   "bottom 40%",
-    onEnter:     () => setSpine(mark, label, id),
-    onEnterBack: () => setSpine(mark, label, id),
+    onEnter:     () => { setSpine(mark, label, id); applySceneLook(id); },
+    onEnterBack: () => { setSpine(mark, label, id); applySceneLook(id); },
   });
 });
 
+// initialize scene 1 immediately so paper opens warm
+applySceneLook(1);
+
 /* ----------------------------------------------------------
-   5) Reveals
+   5) Reveals — cinematic entries
    ---------------------------------------------------------- */
+
+// Split every .display headline into per-word spans for staggered reveal
+document.querySelectorAll(".display").forEach((h) => {
+  if (h.dataset.split === "done") return;
+  // Walk text nodes only; preserve <em>, <br>, <span> children
+  const walker = document.createTreeWalker(h, NodeFilter.SHOW_TEXT, null);
+  const texts = [];
+  let n; while ((n = walker.nextNode())) texts.push(n);
+  texts.forEach((node) => {
+    const parts = node.nodeValue.split(/(\s+)/).filter(Boolean);
+    const frag = document.createDocumentFragment();
+    parts.forEach((part) => {
+      if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); }
+      else {
+        const span = document.createElement("span");
+        span.className = "headline-word";
+        span.textContent = part;
+        frag.appendChild(span);
+      }
+    });
+    node.parentNode.replaceChild(frag, node);
+  });
+  // also wrap any inline <em> contents as words
+  h.querySelectorAll("em").forEach((em) => {
+    if (em.dataset.split === "done") return;
+    const txt = em.textContent;
+    em.textContent = "";
+    const span = document.createElement("span");
+    span.className = "headline-word";
+    span.textContent = txt;
+    em.appendChild(span);
+    em.dataset.split = "done";
+  });
+  h.dataset.split = "done";
+});
+
+// Cinematic word-by-word reveal on every display headline
+document.querySelectorAll(".display").forEach((h) => {
+  const words = h.querySelectorAll(".headline-word");
+  if (!words.length) return;
+  gsap.fromTo(words,
+    { y: 80, opacity: 0, filter: "blur(14px)", rotateX: -30 },
+    {
+      y: 0, opacity: 1, filter: "blur(0px)", rotateX: 0,
+      duration: 1.2, ease: "expo.out", stagger: 0.06,
+      scrollTrigger: { trigger: h, start: "top 88%", toggleActions: "play none none reverse" },
+    });
+});
+
+// Other .reveal items: standard rise + blur + slight scale
 document.querySelectorAll(".reveal").forEach((el) => {
+  if (el.classList.contains("display")) {
+    // headlines animate per-word; ensure parent is fully visible so words show
+    el.style.opacity = "1";
+    el.style.transform = "none";
+    el.style.filter = "none";
+    return;
+  }
   gsap.fromTo(el,
-    { y: 40, opacity: 0, filter: "blur(8px)" },
-    { y: 0, opacity: 1, filter: "blur(0px)", duration: 1.0, ease: "expo.out",
+    { y: 50, opacity: 0, filter: "blur(10px)", scale: 0.98 },
+    { y: 0, opacity: 1, filter: "blur(0px)", scale: 1, duration: 1.1, ease: "expo.out",
       scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none reverse" } });
+});
+
+// Photographs/figures: clip-path wipe from left + subtle zoom-out
+document.querySelectorAll(".hero-figure").forEach((fig) => {
+  gsap.fromTo(fig,
+    { clipPath: "inset(0 100% 0 0)", scale: 1.06 },
+    { clipPath: "inset(0 0% 0 0)", scale: 1, duration: 1.6, ease: "expo.out",
+      scrollTrigger: { trigger: fig, start: "top 85%", toggleActions: "play none none reverse" } });
+});
+
+// Module visuals (tablet + phone): clip-path open + scale settle
+document.querySelectorAll(".module-visuals").forEach((v) => {
+  gsap.fromTo(v,
+    { clipPath: "inset(100% 0 0 0)", opacity: 0 },
+    { clipPath: "inset(0% 0 0 0)", opacity: 1, duration: 1.2, ease: "expo.out",
+      scrollTrigger: { trigger: v, start: "left 90%", horizontal: false, toggleActions: "play none none reverse" } });
 });
 
 /* ----------------------------------------------------------
@@ -392,6 +474,32 @@ if (voicesSection) {
       .to(cards[i],   { opacity: 1, y: 0,  duration: 1, ease: "power2.inOut" }, "<");
   }
 }
+
+/* ----------------------------------------------------------
+   11.5) Marquee strips — duplicate + infinite translate
+   ---------------------------------------------------------- */
+document.querySelectorAll("[data-marquee]").forEach((track) => {
+  // duplicate children for seamless loop
+  const clone = track.innerHTML;
+  track.innerHTML = clone + clone;
+  const direction = track.dataset.direction === "reverse" ? 1 : -1;
+  // animate from 0 to -50% of full width (since we duplicated, this loops)
+  const half = () => -track.scrollWidth / 2;
+  gsap.to(track, {
+    x: () => direction * Math.abs(half()),
+    duration: 28,
+    ease: "none",
+    repeat: -1,
+  });
+  // Scroll-coupled boost: lenis scroll velocity speeds up the marquee
+  const baseSpeed = direction * 0.4;
+  let extra = 0;
+  lenis.on("scroll", ({ velocity }) => { extra = velocity * direction * 0.15; });
+  gsap.ticker.add(() => {
+    const tl = gsap.getTweensOf(track)[0];
+    if (tl) tl.timeScale(1 + Math.abs(extra) * 0.4);
+  });
+});
 
 /* ----------------------------------------------------------
    12) Logo strip drift
