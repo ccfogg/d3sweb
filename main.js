@@ -84,58 +84,75 @@ const fragmentShader = `
   // Brand red — matches data3s.com.tr logo
   const vec3 BRAND_RED = vec3(0.882, 0.145, 0.169);
 
-  // One animated contour-line layer with given scale, speed, density, weight
-  float lineLayer(vec2 p, float scale, vec2 drift, float density, float weight) {
-    vec2 q = p * scale + drift;
-    float n = fbm(q);
-    // iso-contour: thin line where the noise crosses each (1/density) step
-    float band = abs(fract(n * density) - 0.5) * 2.0;
-    float aa   = fwidth(n * density) * weight;
-    return 1.0 - smoothstep(0.0, aa, band);
+  // Distance from p to infinite line through center with direction dir
+  float infiniteLineDist(vec2 p, vec2 center, vec2 dir) {
+    vec2 d = p - center;
+    return abs(d.x * dir.y - d.y * dir.x);
+  }
+
+  // Render one straight line, returns intensity 0..1
+  // angle in radians, perpOffset in screen units (drifts)
+  float straightLine(vec2 p, float aspect, float angle, float perpOffset, float thickness) {
+    vec2 dir = vec2(cos(angle), sin(angle));
+    vec2 perp = vec2(-dir.y, dir.x);
+    vec2 center = vec2(aspect * 0.5, 0.5) + perp * perpOffset;
+    float d = infiniteLineDist(p, center, dir);
+    return 1.0 - smoothstep(thickness * 0.5, thickness * 1.5, d);
   }
 
   void main() {
     vec2 uv = vUv;
     float aspect = uRes.x / uRes.y;
-    vec2 puv = uv;
-    puv.x = (uv.x - 0.5) * aspect + 0.5;
+    vec2 p = vec2(uv.x * aspect, uv.y);
 
-    // Bases: white paper (default) or rich black (compare scene)
-    vec3 paperLight = vec3(0.996, 0.992, 0.985);
+    // Base: white paper (default) or rich black (compare scene)
+    vec3 paperLight = vec3(0.997, 0.994, 0.989);
     vec3 paperDark  = vec3(0.035, 0.035, 0.033);
     vec3 base = mix(paperLight, paperDark, uInvert);
 
-    // Cursor distortion of the field
-    vec2 mp = uMouse;
-    mp.x = (mp.x - 0.5) * aspect + 0.5;
-    float mdist = distance(puv, mp);
-    float mInfluence = exp(-mdist * 2.5) * (0.5 + uMouseVel * 1.8);
-
-    // Three flowing layers at different scales and drift directions
     float t = uTime;
-    vec2 dist = vec2(mInfluence * 0.6, mInfluence * 0.4);
+    float lines = 0.0;
 
-    float layerA = lineLayer(puv + dist * 0.4, 1.8, vec2( t*0.07, -t*0.05), 7.0,  1.4);
-    float layerB = lineLayer(puv + dist * 0.6, 3.2, vec2(-t*0.05,  t*0.08), 12.0, 1.6);
-    float layerC = lineLayer(puv + dist * 0.3, 0.9, vec2( t*0.03,  t*0.04), 4.0,  2.2);
+    // 10 straight thin lines, each drifts perpendicular to itself
+    // Mixed angles: mostly diagonal/horizontal, a couple steep
+    // (angle, baseOffset, speed, thickness)
+    float angles[10];     angles[0]=0.10; angles[1]=1.50; angles[2]=0.42; angles[3]=2.05; angles[4]=0.95;
+                          angles[5]=1.80; angles[6]=0.28; angles[7]=2.50; angles[8]=1.20; angles[9]=0.65;
+    float speeds[10];     speeds[0]=0.035; speeds[1]=0.022; speeds[2]=0.048; speeds[3]=0.018; speeds[4]=0.040;
+                          speeds[5]=0.028; speeds[6]=0.052; speeds[7]=0.020; speeds[8]=0.036; speeds[9]=0.044;
+    float phases[10];     phases[0]=0.11; phases[1]=0.43; phases[2]=0.71; phases[3]=0.27; phases[4]=0.59;
+                          phases[5]=0.83; phases[6]=0.17; phases[7]=0.51; phases[8]=0.91; phases[9]=0.35;
+    float thicks[10];     thicks[0]=0.0015; thicks[1]=0.0020; thicks[2]=0.0012; thicks[3]=0.0025; thicks[4]=0.0014;
+                          thicks[5]=0.0018; thicks[6]=0.0011; thicks[7]=0.0022; thicks[8]=0.0016; thicks[9]=0.0013;
 
-    // Combine — layers darker when summed but capped via screen blend
-    float lines = layerA * 0.55 + layerB * 0.35 + layerC * 0.65;
-    lines = clamp(lines, 0.0, 1.0);
+    // Span over which each line drifts (full screen width and a bit more)
+    float span = aspect * 1.4;
 
-    // Cursor brightens lines near pointer (more visible signal there)
-    lines *= 0.55 + mInfluence * 0.8;
+    for (int i = 0; i < 10; i++) {
+      // drift perpOffset across [-span/2, +span/2] in a wrapping cycle
+      float cycle = mod(phases[i] + t * speeds[i], 1.0);
+      float perpOffset = (cycle - 0.5) * span;
+      // line intensity
+      float L = straightLine(p, aspect, angles[i], perpOffset, thicks[i]);
+      // fade lines near the wrap edges (avoid hard pop)
+      float edgeFade = smoothstep(0.0, 0.08, cycle) * smoothstep(1.0, 0.92, cycle);
+      lines += L * edgeFade;
+    }
 
-    // Edge vignette so lines feel "framed" toward center
-    float edge = smoothstep(0.95, 0.45, distance(uv, vec2(0.5)));
-    lines *= 0.45 + 0.65 * edge;
+    // Cursor: subtle local brightening of any line near pointer
+    vec2 mp = uMouse;
+    mp.x = mp.x * aspect;
+    float mdist = distance(p, mp);
+    float mInf = exp(-mdist * 4.0) * (0.3 + uMouseVel * 1.4);
 
-    // Compose: lay red lines onto base
+    lines = clamp(lines * (0.85 + mInf * 0.5), 0.0, 1.0);
+
+    // Compose
     vec3 col = base;
-    col = mix(col, BRAND_RED, lines * 0.65);
+    col = mix(col, BRAND_RED, lines * 0.82);
 
-    // Subtle paper grain
-    float grain = (hash(uv * uRes + t * 0.4).x - 0.5) * 0.014;
+    // Subtle paper grain (very small)
+    float grain = (hash(uv * uRes + t * 0.4).x - 0.5) * 0.012;
     col += grain;
 
     gl_FragColor = vec4(col, 1.0);
